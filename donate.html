@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>send me money pls</title>
+        <meta name="viewport" content="width=device-width">
+        <style type="text/css">
+            @import url('assets/styles/index.css');
+        </style>
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    </head>
+    <body>
+        <h1>Want to send me money for some reason?</h1>
+        <div>
+            <img src="assets/monero.png" class="text-logo-left" style="margin-right: 7px; width: unset; height: 30px;">
+            <h2>Monero</h2>
+            <a class="link" target="_blank" href="monero:87eQbhUqmtF3mZxXvNG6h5d8zognD1NMoFCUZndXyfzABh8UsKv5ikC4H5EMgDrYA7hK2SH1Sugw9PyGGg3fzjB4Sh5KBFJ">87eQbhUqmtF3mZxXvNG6h5d8zognD1NMoFCUZndXyfzABh8UsKv5ikC4H5EMgDrYA7hK2SH1Sugw9PyGGg3fzjB4Sh5KBFJ</a>
+        </div>
+        <div id="eth_div">
+            <img src="assets/ethereum.png" class="text-logo-left" style="margin-left: 5px; margin-right: 10px; width: unset; height: 30px;">
+            <h2>ETH/ETC</h2>
+            <a class="link" onclick="openEthTransactionThingOrBlockchainExplorerIfEthereumApiDoesntExist()">0x72f9218ED66feC7F8deFea89B5998bE5A90Da489</a>
+        </div>
+    </body>
+    
+    <script>
+        // oh no he's using JS, clearly it must be spyware
+        // fucking cry about it rms
+        async function openEthTransactionThingOrBlockchainExplorerIfEthereumApiDoesntExist() {
+            if (window.ethereum) {
+                await window.ethereum.enable();
+                window.ethereum.request({
+                    method: 'eth_sendTransaction',
+                    params: [
+                        {
+                            to: '0x72f9218ED66feC7F8deFea89B5998bE5A90Da489',
+                            from: window.ethereum.selectedAddress
+                        }
+                    ]
+                })
+                .then(transactionHash => {
+                    console.log(transactionHash);
+                    let eth_div = document.getElementById('eth_div');
+                    if (!asdf) {
+                        asdf = true;
+                        let element = document.createElement('h3');
+                        element.innerHTML = 'Transaction hash';
+                        eth_div.appendChild(element);
+                    }
+                    
+                    let element = document.createElement('a');
+                    element.innerHTML = transactionHash?.result || transactionHash;
+                    eth_div.appendChild(element);
+                })
+                .catch(console.error);
+            } else {
+                window.open("https://www.blockchain.com/eth/address/0x72f9218ED66feC7F8deFea89B5998bE5A90Da489", '_blank');
+            }
+        }
+        
+        let asdf = false;
+    </script>
+    
+    <script>
+        // yoink https://actualwizard.com/how-to-copy-text-to-the-clipboard-with-html-and-javascript
+        function AdvancedCopy(text) {
+            //create our hidden div element
+            var hiddenCopy = document.createElement('div');
+            //set the innerHTML of the div
+            hiddenCopy.innerHTML = text;
+            //set the position to be absolute and off the screen
+            hiddenCopy.style.position = 'absolute';
+            hiddenCopy.style.left = '-9999px';
+            
+            //check and see if the user had a text selection range
+            var currentRange;
+            if(document.getSelection().rangeCount > 0) {
+                //the user has a text selection range, store it
+                currentRange = document.getSelection().getRangeAt(0);
+                //remove the current selection
+                window.getSelection().removeRange(currentRange);
+            } else {
+                //they didn't have anything selected
+                currentRange = false;
+            }
+            
+            //append the div to the body
+            document.body.appendChild(hiddenCopy);
+            //create a selection range
+            var CopyRange = document.createRange();
+            //set the copy range to be the hidden div
+            CopyRange.selectNode(hiddenCopy);
+            //add the copy range
+            window.getSelection().addRange(CopyRange);
+            
+            try {
+                document.execCommand('copy');
+            } catch(err) { console.error(err) }
+            //remove the selection range (Chrome throws a warning if we don't.)
+            window.getSelection().removeRange(CopyRange);
+            //remove the hidden div
+            document.body.removeChild(hiddenCopy);
+            
+            //return the old selection range
+            if(currentRange) {
+                window.getSelection().addRange(currentRange);
+            }
+        }
+    </script>
+</html>

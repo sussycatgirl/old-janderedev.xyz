@@ -1,0 +1,5 @@
+This is a Brave Rewards publisher verification file.
+
+Domain: janderedev.xyz
+Token: 06930dff3cff5aa69f1a0aabe4a34ba542020138f649f10ff39e7c197c43f394
+
