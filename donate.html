@@ -27,31 +27,44 @@
         // fucking cry about it rms
         async function openEthTransactionThingOrBlockchainExplorerIfEthereumApiDoesntExist() {
             if (window.ethereum) {
-                await window.ethereum.enable();
-                window.ethereum.request({
-                    method: 'eth_sendTransaction',
-                    params: [
-                        {
-                            to: '0x72f9218ED66feC7F8deFea89B5998bE5A90Da489',
-                            from: window.ethereum.selectedAddress
+                console.log('Requesting access to ethereum wallet');
+                window.ethereum.request({ method: 'eth_requestAccounts' })
+                .catch(e => {
+                    console.log('Failed to request access');
+                    console.error(e);
+                    window.open("https://www.blockchain.com/eth/address/0x72f9218ED66feC7F8deFea89B5998bE5A90Da489", '_blank');
+                })
+                .then(() => {
+                    console.log('Request succeeded. Requesting transaction');
+                    window.ethereum.request({
+                        method: 'eth_sendTransaction',
+                        params: [
+                            {
+                                to: '0x72f9218ED66feC7F8deFea89B5998bE5A90Da489',
+                                from: window.ethereum.selectedAddress
+                            }
+                        ]
+                    })
+                    .then(transactionHash => {
+                        console.log('Transaction accepted!');
+                        console.log(transactionHash);
+                        let eth_div = document.getElementById('eth_div');
+                        if (!asdf) {
+                            asdf = true;
+                            let element = document.createElement('h3');
+                            element.innerHTML = 'Transaction hash';
+                            eth_div.appendChild(element);
                         }
-                    ]
-                })
-                .then(transactionHash => {
-                    console.log(transactionHash);
-                    let eth_div = document.getElementById('eth_div');
-                    if (!asdf) {
-                        asdf = true;
-                        let element = document.createElement('h3');
-                        element.innerHTML = 'Transaction hash';
+                        
+                        let element = document.createElement('a');
+                        element.innerHTML = transactionHash?.result || transactionHash;
                         eth_div.appendChild(element);
-                    }
-                    
-                    let element = document.createElement('a');
-                    element.innerHTML = transactionHash?.result || transactionHash;
-                    eth_div.appendChild(element);
-                })
-                .catch(console.error);
+                    })
+                    .catch(e => {
+                        console.log('Transaction denied or other error.');
+                        console.error(e);
+                    });
+                });
             } else {
                 window.open("https://www.blockchain.com/eth/address/0x72f9218ED66feC7F8deFea89B5998bE5A90Da489", '_blank');
             }
