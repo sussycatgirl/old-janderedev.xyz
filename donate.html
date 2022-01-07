@@ -12,19 +12,43 @@
         <h1>Want to send me money for some reason?</h1>
         <div>
             <img src="assets/monero.png" class="text-logo-left" style="margin-right: 7px; width: unset; height: 30px;">
-            <h2>Monero</h2>
+            <h2>Monero (preferred)</h2>
             <a class="link" target="_blank" href="monero:87eQbhUqmtF3mZxXvNG6h5d8zognD1NMoFCUZndXyfzABh8UsKv5ikC4H5EMgDrYA7hK2SH1Sugw9PyGGg3fzjB4Sh5KBFJ">87eQbhUqmtF3mZxXvNG6h5d8zognD1NMoFCUZndXyfzABh8UsKv5ikC4H5EMgDrYA7hK2SH1Sugw9PyGGg3fzjB4Sh5KBFJ</a>
         </div>
         <div id="eth_div">
             <img src="assets/ethereum.png" class="text-logo-left" style="margin-left: 5px; margin-right: 10px; width: unset; height: 30px;">
             <h2>ETH/ETC</h2>
-            <a class="link" onclick="openEthTransactionThingOrBlockchainExplorerIfEthereumApiDoesntExist()">0x72f9218ED66feC7F8deFea89B5998bE5A90Da489</a>
+            <a class="link" style="float: left;" onclick="openEthTransactionThingOrBlockchainExplorerIfEthereumApiDoesntExist()">0x72f9218ED66feC7F8deFea89B5998bE5A90Da489</a>
+            <div id="eth-amount-div" style="float: left;" hidden>
+                <input type="number" id="eth-amount-input" style="padding-left: 10px; width: 100px; background-color: #121212; border: none; color: #ffffff; direction: rtl;"/>
+                <a id="eth-amount-name">ETH</a>
+                <button id="eth-amount-button">OK</button>
+            </div>
+            <br style="clear:both" />
+            <a id="unsupported-network" hidden>(I don't use your selected chain, consider using ETC, MATIC or Monero instead)</a>
         </div>
     </body>
     
     <script>
-        // oh no he's using JS, clearly it must be spyware
-        // fucking cry about it rms
+        function handleChainChange(chainID) {
+            console.log('Chain changed to ' + chainID);
+            let netName = ethNetworkNames[Number(chainID)];
+            if (netName) {
+                document.getElementById('eth-amount-name').innerHTML = netName;
+                document.getElementById('unsupported-network').hidden = true;
+            } else {
+                document.getElementById('eth-amount-name').innerHTML = '';
+                document.getElementById('unsupported-network').innerHTML = chainID
+                    ? `(I don't use your selected chain (${chainID}), consider using ETC, MATIC or Monero instead)`
+                    : `(I don't use your selected chain, consider using ETC, MATIC or Monero instead)`;
+                document.getElementById('unsupported-network').hidden = false;
+            }
+        }
+
+        if (window.ethereum) {
+            window.ethereum.on('chainChanged', handleChainChange);
+        }
+
         async function openEthTransactionThingOrBlockchainExplorerIfEthereumApiDoesntExist() {
             if (window.ethereum) {
                 console.log('Requesting access to ethereum wallet');
@@ -35,35 +59,46 @@
                     window.open("https://www.blockchain.com/eth/address/0x72f9218ED66feC7F8deFea89B5998bE5A90Da489", '_blank');
                 })
                 .then(() => {
-                    console.log('Request succeeded. Requesting transaction');
-                    window.ethereum.request({
-                        method: 'eth_sendTransaction',
-                        params: [
-                            {
-                                to: '0x72f9218ED66feC7F8deFea89B5998bE5A90Da489',
-                                from: window.ethereum.selectedAddress
+                    console.log('Request succeeded. Requesting amount');
+                    let networkName = ethNetworkNames[parseInt(window.ethereum.chainId)] || '';
+                    handleChainChange(window.ethereum.chainId);
+                    document.getElementById('eth-amount-name').innerHTML = networkName;
+                    document.getElementById('eth-amount-div').hidden = false;
+                    document.getElementById('eth-amount-button').onclick = () => {
+                        let amount = Math.round(Number(document.getElementById('eth-amount-input').value) * 1000000000000000000).toString(16);
+
+                        window.ethereum.request({
+                            method: 'eth_sendTransaction',
+                            params: [
+                                {
+                                    to: '0x72f9218ED66feC7F8deFea89B5998bE5A90Da489',
+                                    from: window.ethereum.selectedAddress,
+                                    value: `0x${amount}`,
+                                }
+                            ]
+                        })
+                        .then(transactionHash => {
+                            console.log('Transaction accepted!');
+                            console.log(transactionHash);
+                            let eth_div = document.getElementById('eth_div');
+                            if (!asdf) {
+                                asdf = true;
+                                let element = document.createElement('h3');
+                                element.innerHTML = 'Transaction hash';
+                                eth_div.appendChild(element);
                             }
-                        ]
-                    })
-                    .then(transactionHash => {
-                        console.log('Transaction accepted!');
-                        console.log(transactionHash);
-                        let eth_div = document.getElementById('eth_div');
-                        if (!asdf) {
-                            asdf = true;
-                            let element = document.createElement('h3');
-                            element.innerHTML = 'Transaction hash';
+
+                            let element = document.createElement('a');
+                            element.innerHTML = transactionHash?.result || transactionHash;
                             eth_div.appendChild(element);
-                        }
-                        
-                        let element = document.createElement('a');
-                        element.innerHTML = transactionHash?.result || transactionHash;
-                        eth_div.appendChild(element);
-                    })
-                    .catch(e => {
-                        console.log('Transaction denied or other error.');
-                        console.error(e);
-                    });
+                            document.getElementById('eth-amount-div').hidden = true;
+                        })
+                        .catch(e => {
+                            console.log('Transaction denied or other error.');
+                            console.error(e);
+                            document.getElementById('eth-amount-div').hidden = true;
+                        });
+                    }
                 });
             } else {
                 window.open("https://www.blockchain.com/eth/address/0x72f9218ED66feC7F8deFea89B5998bE5A90Da489", '_blank');
@@ -71,6 +106,12 @@
         }
         
         let asdf = false;
+        const ethNetworkNames = {
+            1: 'ETH',
+            56: 'BNB',
+            61: 'ETC',
+            137: 'MATIC',
+        }
     </script>
     
     <script>
